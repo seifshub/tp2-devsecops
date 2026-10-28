@@ -60,6 +60,12 @@ def test_search_notes(client):
     assert [n["title"] for n in res.get_json()] == ["homework"]
 
 
+def test_lookup_resolves_localhost(client):
+    res = client.get("/lookup", query_string={"host": "localhost"})
+    assert res.status_code == 200
+    assert "localhost" in res.get_json()["output"]
+
+
 def test_search_treats_sql_as_plain_text(client):
     client.post("/notes", json={"title": "secret", "content": "x"})
 

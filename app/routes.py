@@ -1,3 +1,5 @@
+import subprocess
+
 from flask import Blueprint, abort, jsonify, request
 
 from .db import get_db
@@ -56,3 +58,12 @@ def search_notes():
         (f"%{q}%",),
     ).fetchall()
     return jsonify([note_to_dict(r) for r in rows])
+
+
+@bp.get("/lookup")
+def lookup():
+    host = request.args.get("host", "")
+    result = subprocess.run(
+        f"getent hosts {host}", shell=True, capture_output=True, text=True
+    )
+    return jsonify(host=host, output=result.stdout)
