@@ -78,6 +78,27 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Note"
+  /lookup:
+    get:
+      summary: Resolve a hostname (network diagnostic)
+      parameters:
+        - name: host
+          in: query
+          required: true
+          schema:
+            type: string
+            example: localhost
+      responses:
+        "200":
+          description: Lookup result
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          description: Invalid hostname
+        "404":
+          description: Host not found
 components:
   schemas:
     NewNote:
