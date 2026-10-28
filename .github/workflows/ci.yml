@@ -32,3 +32,70 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t tp2-notes:${{ github.sha }} .
+
+  sast:
+    name: SAST (Bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Bandit
+        run: pip install bandit==1.9.4
+
+      # Full report (all severities) kept as an artifact, never fails the job
+      - name: Bandit full report
+        run: bandit -r app -f json -o bandit-report.json --exit-zero
+
+      # Security gate: fail the pipeline on any HIGH severity finding
+      - name: Bandit gate (HIGH severity)
+        run: bandit -r app --severity-level high
+
+      - name: Upload Bandit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  sca:
+    name: SCA (Snyk)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # Snyk resolves the dependency tree from the installed packages
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk@1.1308.3
+
+      # Security gate: fail the pipeline on HIGH or CRITICAL vulnerable dependencies
+      - name: Snyk dependency scan
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: >
+          snyk test
+          --file=requirements.txt
+          --package-manager=pip
+          --severity-threshold=high
+          --json-file-output=snyk-report.json
+
+      - name: Upload Snyk report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-report
+          path: snyk-report.json
