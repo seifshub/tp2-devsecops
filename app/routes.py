@@ -1,10 +1,13 @@
-import subprocess
+import re
+import socket
 
 from flask import Blueprint, abort, jsonify, request
 
 from .db import get_db
 
 bp = Blueprint("notes", __name__)
+
+HOSTNAME_RE = re.compile(r"[A-Za-z0-9.-]{1,253}")
 
 
 def note_to_dict(row):
@@ -63,7 +66,11 @@ def search_notes():
 @bp.get("/lookup")
 def lookup():
     host = request.args.get("host", "")
-    result = subprocess.run(
-        f"getent hosts {host}", shell=True, capture_output=True, text=True
-    )
-    return jsonify(host=host, output=result.stdout)
+    if not HOSTNAME_RE.fullmatch(host):
+        abort(400, description="invalid hostname")
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        abort(404, description="host not found")
+    addresses = sorted({info[4][0] for info in infos})
+    return jsonify(host=host, addresses=addresses)

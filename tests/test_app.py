@@ -63,7 +63,15 @@ def test_search_notes(client):
 def test_lookup_resolves_localhost(client):
     res = client.get("/lookup", query_string={"host": "localhost"})
     assert res.status_code == 200
-    assert "localhost" in res.get_json()["output"]
+    assert res.get_json()["addresses"]
+
+
+@pytest.mark.parametrize(
+    "host", ["localhost;cat /etc/passwd", "localhost&cat /etc/passwd&", "$(id)", ""]
+)
+def test_lookup_rejects_command_injection(client, host):
+    res = client.get("/lookup", query_string={"host": host})
+    assert res.status_code == 400
 
 
 def test_search_treats_sql_as_plain_text(client):
