@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: TP2 Notes API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service is up
+  /notes:
+    get:
+      summary: List all notes
+      responses:
+        "200":
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+    post:
+      summary: Create a note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewNote"
+      responses:
+        "201":
+          description: Note created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "400":
+          description: Invalid input
+  /notes/{noteId}:
+    get:
+      summary: Get a note by id
+      parameters:
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: The note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "404":
+          description: Note not found
+  /notes/search:
+    get:
+      summary: Search notes by title
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            example: homework
+      responses:
+        "200":
+          description: Matching notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+components:
+  schemas:
+    NewNote:
+      type: object
+      required: [title, content]
+      properties:
+        title:
+          type: string
+          example: homework
+        content:
+          type: string
+          example: finish the devsecops lab
+    Note:
+      allOf:
+        - $ref: "#/components/schemas/NewNote"
+        - type: object
+          properties:
+            id:
+              type: integer
+              example: 1

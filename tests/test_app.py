@@ -16,6 +16,13 @@ def test_health(client):
     assert res.get_json() == {"status": "ok"}
 
 
+def test_security_headers(client):
+    res = client.get("/health")
+    assert res.headers["X-Content-Type-Options"] == "nosniff"
+    assert "frame-ancestors 'none'" in res.headers["Content-Security-Policy"]
+    assert res.headers["Cache-Control"] == "no-store"
+
+
 def test_list_notes_empty(client):
     res = client.get("/notes")
     assert res.status_code == 200
